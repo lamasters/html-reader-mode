@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "html-reader-mode"
+version = "0.1.0"
+description = "Parse an HTML document and extract the main content. Similar to the reader mode in web browsers."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { file = "LICENSE" }
+authors = [
+  { name = "lamasters" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "beautifulsoup4>=4.14.2",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/lamasters/html-reader-mode"
+"Bug Tracker" = "https://github.com/lamasters/html-reader-mode/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/html_reader_mode"]
+
