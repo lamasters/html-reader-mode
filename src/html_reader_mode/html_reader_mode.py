@@ -22,22 +22,6 @@ class TextBlock:
         self.tag_level: int = tag_level
         self.tag_name: str = tag_name
         self.is_content: bool = False
-        self.labels: set[str] = set()
-
-    def merge_next(self, other: "TextBlock") -> None:
-        self.text += "\n" + other.text
-        self.num_words += other.num_words
-        self.num_linked_words += other.num_linked_words
-        if self.num_words > 0:
-            self.link_density = self.num_linked_words / self.num_words
-        else:
-            self.link_density = 0.0
-        self.is_content = self.is_content or other.is_content
-        self.labels.update(other.labels)
-        self.tag_level = min(self.tag_level, other.tag_level)
-
-        if self.tag_name != other.tag_name:
-            self.tag_name = "p"
 
 
 class HTMLReaderMode:
@@ -215,48 +199,46 @@ class HTMLReaderMode:
         content_words_so_far = 0
 
         for i in range(len(blocks)):
-            prev: Optional[TextBlock] = blocks[i - 1] if i > 0 else None
-            curr: TextBlock = blocks[i]
+            prev_block: Optional[TextBlock] = blocks[i - 1] if i > 0 else None
+            current_block: TextBlock = blocks[i]
             next_block: Optional[TextBlock] = (
                 blocks[i + 1] if i < len(blocks) - 1 else None
             )
 
             if cutoff:
-                curr.is_content = False
-                curr.labels.add("STRICTLY_NOT_CONTENT")
+                current_block.is_content = False
                 continue
 
             if (
-                terminating_regex.search(curr.text)
-                and curr.num_words < self.minimum_block_words
+                terminating_regex.search(current_block.text)
+                and current_block.num_words < self.minimum_block_words
             ):
-                curr.labels.add("STRICTLY_NOT_CONTENT")
+                current_block.is_content = False
                 if (
-                    cutoff_regex.search(curr.text)
+                    cutoff_regex.search(current_block.text)
                     and content_words_so_far > self.minimum_cutoff_threshold
                 ):
                     cutoff = True
-                    curr.is_content = False
                     continue
 
-            if "STRICTLY_NOT_CONTENT" in curr.labels:
-                curr.is_content = False
+            if not current_block.is_content:
                 continue
 
             is_content = False
-            if curr.link_density <= self.maximum_block_link_density:
+            if current_block.link_density <= self.maximum_block_link_density:
                 if (
-                    prev is None
-                    or prev.link_density <= self.maximum_preceding_block_link_density
+                    prev_block is None
+                    or prev_block.link_density
+                    <= self.maximum_preceding_block_link_density
                 ):
-                    if curr.num_words <= self.minimum_block_words:
+                    if current_block.num_words <= self.minimum_block_words:
                         if (
                             next_block is None
                             or next_block.num_words <= self.minimum_block_words
                         ):
                             if (
-                                prev is None
-                                or prev.num_words <= self.minimum_block_words
+                                prev_block is None
+                                or prev_block.num_words <= self.minimum_block_words
                             ):
                                 is_content = False
                             else:
@@ -266,7 +248,7 @@ class HTMLReaderMode:
                     else:
                         is_content = True
                 else:
-                    if curr.num_words <= self.minimum_block_words:
+                    if current_block.num_words <= self.minimum_block_words:
                         if (
                             next_block is None
                             or next_block.num_words <= self.minimum_block_words
@@ -279,6 +261,6 @@ class HTMLReaderMode:
             else:
                 is_content = False
 
-            curr.is_content = is_content
+            current_block.is_content = is_content
             if is_content:
-                content_words_so_far += curr.num_words
+                content_words_so_far += current_block.num_words
