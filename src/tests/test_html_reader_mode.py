@@ -11,7 +11,7 @@ class TestHTMLReaderMode(unittest.TestCase):
         <html>
             <body>
                 <div id="header">
-                    <a href="/">Home</a> <a href="/about">About</a>
+                    <a href="http://link1">Home</a> <a href="http://link2">About</a>
                 </div>
                 <div id="content">
                     <h1>Main Article Title</h1>
@@ -21,9 +21,9 @@ class TestHTMLReaderMode(unittest.TestCase):
                     <p>More content here. Very important information that we want to extract.</p>
                 </div>
                 <div id="sidebar">
-                    <a href="/link1">Link 1</a>
-                    <a href="/link2">Link 2</a>
-                    <a href="/link3">Link 3</a>
+                    <a href="http://link1">Link 1</a>
+                    <a href="http://link2">Link 2</a>
+                    <a href="http://link3">Link 3</a>
                 </div>
                 <div id="footer">
                     <p>Copyright 2023. All rights reserved.</p>
@@ -91,7 +91,7 @@ class TestHTMLReaderMode(unittest.TestCase):
         reader = HTMLReaderMode(maximum_block_link_density=0.8, minimum_block_words=1)
         html = """
         <body>
-            <p><a href="l1">Link1</a> <a href="l2">Link2</a> <a href="l3">Link3</a> Text content here.</p>
+            <p><a href="http://l1">Link1</a> <a href="l2">Link2</a> <a href="l3">Link3</a> Text content here.</p>
         </body>
         """
         content = reader.sanitize(html)
@@ -136,12 +136,27 @@ class TestHTMLReaderMode(unittest.TestCase):
         )
         html = """
         <body>
-            <p><a href="l1">Link</a> <a href="l2">Link</a> <a href="l3">Link</a></p>
+            <p><a href="http://l1">Link</a> <a href="http://l2">Link</a> <a href="http://l3">Link</a></p>
             <p>Short follow up.</p>
         </body>
         """
         content = reader.sanitize(html)
         self.assertFalse(any("Short follow up" in c["content"] for c in content))
+        self.assertFalse(any("Link" in c["content"] for c in content))
+
+    def test_inlinks_included(self):
+        reader = HTMLReaderMode(minimum_block_words=1)
+        html = """
+        <body>
+            <p><a href="/l1">Link 1</a> <a href="/l2">Link 2</a> <a href="/l3">Link 3</a></p>
+            <p>Short follow up.</p>
+        </body>
+        """
+        content = reader.sanitize(html)
+        self.assertTrue(any("Short follow up" in c["content"] for c in content))
+        self.assertTrue(any("Link 1" in c["content"] for c in content))
+        self.assertTrue(any("Link 2" in c["content"] for c in content))
+        self.assertTrue(any("Link 3" in c["content"] for c in content))
 
     def test_nested_structure(self):
         reader = HTMLReaderMode(minimum_block_words=1)

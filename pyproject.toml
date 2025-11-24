@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "html-reader-mode"
-version = "0.1.0"
+version = "0.1.1"
 description = "Parse an HTML document and extract the main content. Similar to the reader mode in web browsers."
 readme = "README.md"
 requires-python = ">=3.9"

@@ -171,7 +171,11 @@ class HTMLReaderMode:
                     current_num_linked_words += words
             elif isinstance(node, Tag):
                 is_block = node.name in self.block_tags
-                is_link = node.name == "a"
+                is_link = (
+                    node.name == "a"
+                    and hasattr(node, "href")
+                    and node["href"].startswith("http")
+                )
 
                 next_container_tag = node.name if is_block else container_tag
 
