@@ -22,6 +22,7 @@ class TextBlock:
         self.tag_level: int = tag_level
         self.tag_name: str = tag_name
         self.is_content: bool = False
+        self.to_be_excluded: bool = False
 
 
 class HTMLReaderMode:
@@ -206,22 +207,24 @@ class HTMLReaderMode:
             )
 
             if cutoff:
-                current_block.is_content = False
+                current_block.to_be_excluded = True
                 continue
 
             if (
                 terminating_regex.search(current_block.text)
                 and current_block.num_words < self.minimum_block_words
             ):
-                current_block.is_content = False
+                current_block.to_be_excluded = True
                 if (
                     cutoff_regex.search(current_block.text)
                     and content_words_so_far > self.minimum_cutoff_threshold
                 ):
                     cutoff = True
+                    current_block.is_content = False
                     continue
 
-            if not current_block.is_content:
+            if current_block.to_be_excluded:
+                current_block.is_content = False
                 continue
 
             is_content = False
